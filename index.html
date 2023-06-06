@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100;0,300;0,400;0,500;0,700;0,900;1,100;1,300;1,400;1,500;1,700;1,900&display=swap");
+      body {
+        background: linear-gradient(45deg, #08041d, #200852);
+        background-attachment: fixed;
+        font-family: "Roboto", sans-serif;
+      }
+      #score {
+        font-size: 20px;
+        font-weight: bold;
+        color: #fff;
+        text-align: center;
+        margin-top: 50px;
+      }
+      #game-board {
+        position: relative;
+        width: 500px;
+        height: 500px;
+        border: 15px solid #0099fd;
+        margin-top: 50px;
+        margin-left: auto;
+        margin-right: auto;
+        box-shadow: 0 0 100px 1px #0099fd;
+      }
+      .snake,
+      .apple {
+        position: absolute;
+        width: 20px;
+        height: 20px;
+      }
+      .snake {
+        background-color: #fefefe;
+      }
+      .apple {
+        background-color: greenyellow;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="score">Очки: 0</div>
+    <div id="game-board"></div>
+
+    <script>
+      const snakeSpeed = 125; // скорость змейки в мс
+
+      // Получаем ссылку на игровое поле
+      const gameBoard = document.getElementById("game-board");
+
+      // Размеры игрового поля
+      const boardWidth = 500;
+      const boardHeight = 500;
+
+      // Размеры квадрата
+      const squareSize = 20;
+
+      // Инициализация змейки
+      let snake = [
+        { x: 2, y: 0 },
+        { x: 1, y: 0 },
+        { x: 0, y: 0 },
+      ];
+
+      // Инициализация позиции яблока
+      let apple = { x: 10, y: 10 };
+
+      // Количество очков
+      let score = 0;
+
+      // Рисуем змейку
+      function drawSnake() {
+        for (var i = 0; i < snake.length; i++) {
+          var snakePart = document.createElement("div");
+          snakePart.className = "snake";
+          snakePart.style.left = snake[i].x * squareSize + "px";
+          snakePart.style.top = snake[i].y * squareSize + "px";
+          gameBoard.appendChild(snakePart);
+        }
+      }
+
+      // Рисуем яблоко
+      function drawApple() {
+        var appleElement = document.createElement("div");
+        appleElement.className = "apple";
+        appleElement.style.left = apple.x * squareSize + "px";
+        appleElement.style.top = apple.y * squareSize + "px";
+        gameBoard.appendChild(appleElement);
+      }
+
+      // Удаляем предыдущие отрисованные элементы
+      function clearBoard() {
+        while (gameBoard.firstChild) {
+          gameBoard.removeChild(gameBoard.firstChild);
+        }
+      }
+
+      // Выводим количество очков
+      function updateScore() {
+        var scoreElement = document.getElementById("score");
+        scoreElement.textContent = "Очки: " + score;
+      }
+
+      // Игровой цикл
+      function gameLoop() {
+        clearBoard();
+        moveSnake();
+        drawSnake();
+        drawApple();
+        updateScore();
+      }
+
+      // Обработка нажатий клавиш
+      document.addEventListener("keydown", function (event) {
+        changeDirection(event.keyCode);
+      });
+
+      // Изменение направления движения змейки
+      function changeDirection(keyCode) {
+        // 37: влево, 38: вверх, 39: вправо, 40: вниз
+        if (keyCode === 37 && direction !== "right") {
+          direction = "left";
+        } else if (keyCode === 38 && direction !== "down") {
+          direction = "up";
+        } else if (keyCode === 39 && direction !== "left") {
+          direction = "right";
+        } else if (keyCode === 40 && direction !== "up") {
+          direction = "down";
+        }
+      }
+
+      // Перемещение змейки
+      function moveSnake() {
+        var head = { x: snake[0].x, y: snake[0].y };
+
+        // Изменяем координаты головы в зависимости от направления
+        if (direction === "right") {
+          head.x++;
+        } else if (direction === "left") {
+          head.x--;
+        } else if (direction === "up") {
+          head.y--;
+        } else if (direction === "down") {
+          head.y++;
+        }
+
+        // Добавляем новую голову в начало змейки
+        snake.unshift(head);
+
+        // Проверяем, если змейка съела яблоко
+        if (head.x === apple.x && head.y === apple.y) {
+          // Генерируем новую позицию для яблока
+          generateApple();
+          // Увеличиваем счетчик на 1
+          score += 1;
+        } else {
+          // Если змейка не съела яблоко, удаляем хвост
+          snake.pop();
+        }
+
+        // Проверяем, если змейка столкнулась с собой или со стеной
+        if (checkCollision()) {
+          alert(`Ваш счет: ${score}`);
+          // Запускаем новую игру
+          resetGame();
+        }
+      }
+
+      // Генерация новой позиции для яблока
+      function generateApple() {
+        apple.x = Math.floor(Math.random() * (boardWidth / squareSize));
+        apple.y = Math.floor(Math.random() * (boardHeight / squareSize));
+      }
+
+      // Проверка столкновения змейки
+      function checkCollision() {
+        var head = snake[0];
+
+        // Проверяем, если змейка столкнулась со стеной
+        if (
+          head.x < 0 ||
+          head.x >= boardWidth / squareSize ||
+          head.y < 0 ||
+          head.y >= boardHeight / squareSize
+        ) {
+          return true;
+        }
+
+        // Проверяем, если змейка столкнулась с собой
+        for (var i = 1; i < snake.length; i++) {
+          if (head.x === snake[i].x && head.y === snake[i].y) {
+            return true;
+          }
+        }
+
+        return false;
+      }
+
+      // Сброс игры
+      function resetGame() {
+        snake = [
+          { x: 2, y: 0 },
+          { x: 1, y: 0 },
+          { x: 0, y: 0 },
+        ];
+        direction = "right";
+        generateApple();
+        // Обнуляем количество очков
+        score = 0;
+      }
+
+      // Запуск игры
+      var direction = "right";
+      setInterval(gameLoop, snakeSpeed);
+    </script>
+  </body>
+</html>
